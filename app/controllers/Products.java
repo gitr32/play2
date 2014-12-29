@@ -13,6 +13,7 @@ import views.html.products.list;
 import views.html.products.details;
 
 
+
 /**
  * Created by r128 on 28/12/14.
  */
@@ -30,14 +31,41 @@ public class Products extends Controller{
     }
 
     public static Result details(String ean) {
-        return TODO;
+        final Product product = Product.findByEan(ean);
+
+        if(product == null) {
+            return notFound(String.format("Product %s does not exist.", ean));
+        }
+
+        Form<Product> filledForm = productForm.fill(product);
+        return ok(details.render(filledForm));
     }
 
     public static Result save() {
         Form<Product> boundForm = productForm.bindFromRequest();
+
+        if(boundForm.hasErrors()) {
+            flash("error", "Please correct the form below.");
+            return badRequest(details.render(boundForm));
+        }
+
         Product product = boundForm.get();
         product.save();
-        return ok(String.format("Saved product %s", product));
+
+        flash("success", String.format("Successfully added product %s", product));
+
+        return redirect(routes.Products.list());
+    }
+
+    public static Result delete(String ean) {
+        final Product product = Product.findByEan(ean);
+
+        if(product == null) {
+            return notFound(String.format("Product %s does not exist.", ean));
+        }
+
+        Product.remove(product);
+        return redirect(routes.Products.list());
     }
 
 }
